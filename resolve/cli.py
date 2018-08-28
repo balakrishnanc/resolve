@@ -73,11 +73,12 @@ class Resolv:
                               name, 'AAAA')
 
     def q_allA(self, name):
+        """Resolve a DNS name to both an IPv4 and an IPv6 address."""
         for ns_pair in self._resolvers:
             # Change nameserver.
             self._r.nameservers = ns_pair
 
-            yield (name, self.q_A(name), self.q_AAAA(name))
+            yield (name, ns_pair, self.q_A(name), self.q_AAAA(name))
 
     def __repr__(self):
         num_ns = len(self._resolvers)
@@ -107,9 +108,11 @@ def main(args):
     with args.out_file as out:
         r = Resolv.Resolver()
         for results in (r.q_allA(n) for n in names):
-            for (name, ips_v4, ips_v6) in results:
-                out.write("{},{},{}\n".format(name,
-                                              ip_list(ips_v4), ip_list(ips_v6)))
+            for (name, ns, ips_v4, ips_v6) in results:
+                out.write("{},{},{},{}\n".format(name,
+                                                 ip_list(ns),
+                                                 ip_list(ips_v4),
+                                                 ip_list(ips_v6)))
                 out.flush()
 
 
