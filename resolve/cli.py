@@ -19,6 +19,10 @@ __license__ = 'MIT'
 import dns.resolver
 import io
 import resolvers
+import sys
+
+
+COMMA = ','
 
 
 class Resolv:
@@ -36,26 +40,37 @@ class Resolv:
         return tuple([ip.to_text() for ans in reply.response.answer
                       for ip in ans.items])
 
-    def run_query(self, query_fn, err_fn):
+    def run_query(self, query_fn, err_fn, *args):
         """Run query and invoke callback if errors were encountered."""
+
+        # Context for throwing exceptions.
+        _getErrContext = \
+            lambda e: "query-<{}>-({}): {}".format(COMMA.join(self._r.nameservers),
+                                              COMMA.join(args),
+                                              str(e))
         try:
-            return query_fn()
-        except dns.resolver.NXDOMAIN:
+            return query_fn(*args)
+        except dns.resolver.NXDOMAIN as e:
+            sys.stderr.write("Error: {}\n".format(_getErrContext(e)))
             return err_fn()
-        except dns.resolver.NoAnswer:
+        except dns.resolver.NoAnswer as e:
+            sys.stderr.write("Error: {}\n".format(_getErrContext(e)))
             return err_fn()
-        except dns.exception.Timeout:
+        except dns.exception.Timeout as e:
+            sys.stderr.write("Error: {}\n".format(_getErrContext(e)))
             return err_fn()
 
     def q_A(self, name):
         """Resolve a DNS name to an IPv4 address ('A' query)."""
-        return self.run_query(lambda: Resolv.get_ips(self._r.query(name, 'A')),
-                              lambda: tuple())
+        return self.run_query(lambda *v: Resolv.get_ips(self._r.query(*v)),
+                              lambda: tuple(),
+                              name, 'A')
 
     def q_AAAA(self, name):
         """Resolve a DNS name to an IPv6 address ('AAAA' query)."""
-        return self.run_query(lambda: Resolv.get_ips(self._r.query(name, 'AAAA')),
-                              lambda: tuple())
+        return self.run_query(lambda *v: Resolv.get_ips(self._r.query(*v)),
+                              lambda: tuple(),
+                              name, 'AAAA')
 
     def q_allA(self, name):
         for ns_pair in self._resolvers:
@@ -100,7 +115,6 @@ def main(args):
 
 if __name__ == '__main__':
     import argparse
-    import sys
 
     parser = argparse.ArgumentParser(
         description="Resolve a list of DNS names to IP(v4/v6) addresses.")
