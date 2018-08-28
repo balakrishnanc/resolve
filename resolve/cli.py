@@ -54,7 +54,7 @@ class Resolv:
             sys.stderr.write("Error: {}\n".format(_getErrContext(e)))
             return err_fn()
         except dns.resolver.NoAnswer as e:
-            sys.stderr.write("Error: {}\n".format(_getErrContext(e)))
+            sys.stderr.write("Warn: {}\n".format(_getErrContext(e)))
             return err_fn()
         except dns.exception.Timeout as e:
             sys.stderr.write("Error: {}\n".format(_getErrContext(e)))
