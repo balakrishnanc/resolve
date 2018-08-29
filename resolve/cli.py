@@ -35,10 +35,11 @@ class Resolv:
         self._resolvers.extend(resolvers)
 
     @classmethod
-    def get_ips(self, reply):
+    def get_ips(self, reply, qtype):
         """Retrieve IP addresses from the answers."""
         return tuple([ip.to_text() for ans in reply.response.answer
-                      for ip in ans.items])
+                      for ip in ans.items
+                      if ans.rdtype == dns.rdatatype.from_text(qtype)])
 
     def run_query(self, query_fn, err_fn, *args):
         """Run query and invoke callback if errors were encountered."""
@@ -65,13 +66,15 @@ class Resolv:
 
     def q_A(self, name):
         """Resolve a DNS name to an IPv4 address ('A' query)."""
-        return self.run_query(lambda *v: Resolv.get_ips(self._r.query(*v)),
+        return self.run_query(lambda qn, qt: (
+            Resolv.get_ips(self._r.query(qn, qt), qt)),
                               lambda: tuple(),
                               name, 'A')
 
     def q_AAAA(self, name):
         """Resolve a DNS name to an IPv6 address ('AAAA' query)."""
-        return self.run_query(lambda *v: Resolv.get_ips(self._r.query(*v)),
+        return self.run_query(lambda qn, qt: (
+            Resolv.get_ips(self._r.query(qn, qt), qt)),
                               lambda: tuple(),
                               name, 'AAAA')
 
