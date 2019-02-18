@@ -149,7 +149,7 @@ if __name__ == '__main__':
         sys.stderr.write('Warn: ignoring `host` specified in command-line!\n')
 
     if args.out_file:
-        args.out_file = io.open(args.out_path, 'w', encoding='utf-8')
+        args.out_file = io.open(args.out_file, 'w', encoding='utf-8')
     else:
         args.out_file = sys.stdout
 
